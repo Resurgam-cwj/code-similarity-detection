@@ -10,11 +10,14 @@ public class Verify {
     private  Map<String, Map<String,Integer>> simmap;
     private  static Map<String,Map<String,Integer>> testMap = new HashMap<>();
     private Similarity sm;
+    public double weight_sm;
+    public double weight_win;
     private double TP;//真正例
     private double TN;//真负例
     private double FP;//假正例
     private double FN;//假负例
     private int simdistance;
+    private double p;//参数
     static  {
         //test.cpp
         Map<String, Integer> map = new HashMap<>();
@@ -417,6 +420,21 @@ public class Verify {
 
     }
 
+    public Verify(Similarity sm , double w1, double w2,int simdistance){
+        this.weight_sm=w1;
+        this.weight_win=w2;
+        this.simmap=sm.getSimindex();
+        this.winnowmap=sm.getWinnowindex();
+        this.sm=sm;
+        this.TP=0;
+        this.TN=0;
+        this.FP=0;
+        this.FN=0;
+        this.simdistance=simdistance;
+        this.p=1/(4*simdistance);
+        sim_winnowexe();
+    }
+
     private void simexe() {
         String str1 , str2;
         Map<String,Integer> map;
@@ -445,8 +463,7 @@ public class Verify {
         }
     }
 
-    public void winnowexe(){
-        int size = 0;
+    private void winnowexe(){
         double x,y;
         String str1 , str2;
         for (Map.Entry<String, Map<String, Integer>> entry0 : testMap.entrySet()){
@@ -478,6 +495,41 @@ public class Verify {
             }
         }
     }
+
+    public void sim_winnowexe(){
+        double x,y;
+        Map<String,Integer> map;
+        String str1 , str2;
+        for (Map.Entry<String, Map<String, Integer>> entry0 : testMap.entrySet()){
+            str1=entry0.getKey();
+            map = simmap.get(str1);
+            for (Map.Entry<String , Integer> entry1 : entry0.getValue().entrySet()) {
+                str2=entry1.getKey();
+                x=sm.getResm(str1,str2)*weight_win+weight_sm/(double)(1+p* map.get(str2));
+                if (entry1.getValue()==1){
+                    if (x>0.8){
+                        TP++;
+                    }
+                    else {
+                        FN++;
+                    }
+                }
+                else {
+                    if (x>0.8){
+                        FP++;
+//                        System.out.println(str1+"与"+str2+"检测出相似但实际不相似");
+//                        System.out.println(str1+"与"+str2+"的相似度为"+x);
+//                        System.out.println(str2+"与"+str1+"的相似度为"+y);
+                    }
+                    else {
+                        TN++;
+                    }
+                }
+
+            }
+        }
+    }
+
     public double getPrecision(){
         return TP/(TP+FP);
     }

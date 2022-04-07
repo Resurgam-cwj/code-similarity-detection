@@ -50,6 +50,37 @@ public class Similarity {
         wincaculate();
     }
 
+    public Similarity(Map<String,String> map,String path) throws IOException {
+        this.path = path;
+        Simhash simhash = new Simhash(null);
+        simhashvalue = new HashMap<>();
+        simindex = new HashMap<>();
+        String filename, content;
+        String[] strings;
+        int[] arr;
+        long hash;
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            filename=entry.getKey();
+            strings = entry.getValue().split("\\s+");
+            simhash.setStrings(strings);
+            hash = simhash.simhash64();
+            simhashvalue.put(filename,hash);
+        }
+        simcaculate();
+        map = Dataprocessing.getFilesData(path);
+        winnowhashvalue = new HashMap<>();
+        winnowindex = new HashMap<>();
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            filename = entry.getKey();
+            content = entry.getValue();
+            content = content.substring(1, content.length() - 1);
+            strings = content.split(", ");
+            arr = Arrays.stream(strings).mapToInt(Integer::parseInt).toArray();
+            winnowhashvalue.put(filename, arr);
+        }
+        wincaculate();
+    }
+
     public Map<String, Map<String, Double>> getWinnowindex() {
         return winnowindex;
     }
